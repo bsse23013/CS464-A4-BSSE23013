@@ -70,6 +70,7 @@ MonoBehaviour:
   value: 1
   spinSpeed: 90
   burst: {fileID: 6358483400898909932, guid: 1a6bd9ac4d76db6448f5d7756a3cc932, type: 3}
+  pickup: {fileID: 8300000, guid: 341cc2385d9e9c34e80d0a51f763b94e, type: 3}
 --- !u!1 &8550683616606862337
 GameObject:
   m_ObjectHideFlags: 0

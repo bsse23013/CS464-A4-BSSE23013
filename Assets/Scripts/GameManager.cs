@@ -1,8 +1,6 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,17 +10,28 @@ public class GameManager : MonoBehaviour
     [SerializeField] float respawnDelay = 0.6f, spawnProtection = 1.5f;
     [SerializeField] Health player;
     [SerializeField] Transform respawnPoint;
-    [SerializeField] TMP_Text scoreText, livesText, hintText;
-    [SerializeField] GameObject winPanel, losePanel;
-    [SerializeField] Image damageFlash;
+    [SerializeField] AudioClip winClip, loseClip;
 
+    HudView hud;
     int score;
 
-    void Awake() => Instance = this;
+    public bool Over { get; private set; }
+
+    void Awake()
+    {
+        Instance = this;
+        hud = FindAnyObjectByType<HudView>();
+    }
+
+    // listener 5: the lives and hearts text follow the health events
+    void OnEnable() => GameEvents.PlayerDamaged += OnHealthChanged;
+    void OnDisable() => GameEvents.PlayerDamaged -= OnHealthChanged;
+
+    void OnHealthChanged(int current, int max) => UpdateUI();
 
     void Start()
     {
-        hintText.text = "";
+        hud.SetHint("");
         UpdateUI();
     }
 
@@ -34,43 +43,23 @@ public class GameManager : MonoBehaviour
 
     public void UpdateUI()
     {
-        scoreText.text = $"Coins: {score} / {targetScore}";
-        livesText.text = $"Lives: {lives}   Hearts: {Mathf.Max(player.Current, 0)} / {player.Max}";
+        hud.scoreText.text = $"Coins: {score} / {targetScore}";
+        hud.livesText.text = $"Lives: {lives}";
     }
 
     // the goal only counts once enough coins are in
     public void ReachGoal()
     {
+        if (Over) return;
         if (score >= targetScore) Win();
         else StartCoroutine(Hint($"Collect {targetScore - score} more coin(s) first"));
     }
 
     IEnumerator Hint(string message)
     {
-        hintText.text = message;
+        hud.SetHint(message);
         yield return new WaitForSeconds(2f);
-        hintText.text = "";
-    }
-
-    // a quick red wash over the screen when a hit lands
-    public void FlashDamage()
-    {
-        if (damageFlash == null) return;
-        StopCoroutine(nameof(Flash));
-        StartCoroutine(nameof(Flash));
-    }
-
-    IEnumerator Flash()
-    {
-        Color c = damageFlash.color;
-        for (float t = 0f; t < 0.35f; t += Time.deltaTime)
-        {
-            c.a = Mathf.Lerp(0.4f, 0f, t / 0.35f);
-            damageFlash.color = c;
-            yield return null;
-        }
-        c.a = 0f;
-        damageFlash.color = c;
+        hud.SetHint("");
     }
 
     public void SetCheckpoint(Transform point) => respawnPoint = point;
@@ -79,6 +68,7 @@ public class GameManager : MonoBehaviour
     {
         lives--;
         UpdateUI();
+        PersistentMusic.Pause();   // the music drops out when the player dies or falls
         if (lives <= 0) Lose();
         else StartCoroutine(Respawn());
     }
@@ -90,14 +80,28 @@ public class GameManager : MonoBehaviour
         body.position = respawnPoint.position;
         body.linearVelocity = Vector3.zero;
         player.Restore(spawnProtection);
+        PersistentMusic.Resume();
     }
 
-    void Win() { winPanel.SetActive(true); Time.timeScale = 0f; }
-    void Lose() { losePanel.SetActive(true); Time.timeScale = 0f; }
-
-    public void Restart()
+    void Win()
     {
-        Time.timeScale = 1f;    // it survives a scene load
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        Over = true;
+        int level = gameObject.scene.buildIndex;
+        float time = Time.timeSinceLevelLoad;
+        bool best = SaveData.Record(level, time);
+        SaveData.Unlock(level + 1);
+        PersistentMusic.Stop();
+        SfxPlayer.Instance.Play(winClip);
+        hud.ShowWin($"Level {level} complete!\nTime {time:0.0} s" + (best ? "  (new best!)" : $"  (best {SaveData.GetBest(level):0.0} s)"));
+        Time.timeScale = 0f;
+    }
+
+    void Lose()
+    {
+        Over = true;
+        PersistentMusic.Stop();
+        SfxPlayer.Instance.Play(loseClip);
+        hud.ShowLose();
+        Time.timeScale = 0f;
     }
 }

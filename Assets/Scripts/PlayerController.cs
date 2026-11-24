@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float jumpBuffer = 0.12f;
     [SerializeField] Transform body;               // the capsule mesh child
     [SerializeField] float squashDuration = 0.25f;
+    [SerializeField] AudioClip landClip;
 
     Rigidbody rb;
     Transform cam;
@@ -33,6 +34,9 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // Update still runs at time scale 0, so stop reading input while paused
+        if (PauseMenu.IsPaused || GameManager.Instance.Over) return;
+
         // read input here, not in FixedUpdate
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
@@ -67,6 +71,7 @@ public class PlayerController : MonoBehaviour
         {
             if (squash != null) StopCoroutine(squash);
             squash = StartCoroutine(Squash());
+            SfxPlayer.Instance.Play(landClip);
         }
         if (isGrounded)
             airTime = 0f;

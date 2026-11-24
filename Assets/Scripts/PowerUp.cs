@@ -6,6 +6,7 @@ public class PowerUp : MonoBehaviour
     [SerializeField] float multiplier = 1.6f;
     [SerializeField] float duration = 5f;
     [SerializeField] GameObject burst;
+    [SerializeField] AudioClip pickup;
     [SerializeField] float respawnAfter = 4f;   // so a fall can't leave a level without its pickup
 
     Collider zone;
@@ -22,6 +23,7 @@ public class PowerUp : MonoBehaviour
         if (!other.CompareTag("Player")) return;
         // the timer lives on the player, so it keeps running after this pickup is hidden
         other.GetComponent<PlayerController>().BoostSpeed(multiplier, duration);
+        SfxPlayer.Instance.Play(pickup);
         if (burst != null) Instantiate(burst, transform.position, Quaternion.identity);
         StartCoroutine(Hide());
     }

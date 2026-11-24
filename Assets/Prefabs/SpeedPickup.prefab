@@ -160,4 +160,5 @@ MonoBehaviour:
   multiplier: 1.6
   duration: 5
   burst: {fileID: 3124257138449754166, guid: e51aa0d3c7dc0e64da01269417304e3f, type: 3}
+  pickup: {fileID: 8300000, guid: 2b5c2558e2cbd044fad112e4a6843ca7, type: 3}
   respawnAfter: 4
