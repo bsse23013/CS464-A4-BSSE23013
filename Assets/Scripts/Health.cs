@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Health : MonoBehaviour
@@ -7,6 +8,9 @@ public class Health : MonoBehaviour
     int current;
     float invulnerableUntil;
     Renderer[] visuals;
+
+    public event Action<int, int> Damaged;
+    public event Action<int, int> Healed;
 
     public int Current => current;
     public int Max => max;
@@ -30,8 +34,7 @@ public class Health : MonoBehaviour
         if (current <= 0 || Time.time < invulnerableUntil) return false;
         invulnerableUntil = Time.time + iFrames;
         current -= amount;
-        GameManager.Instance.UpdateUI();
-        GameManager.Instance.FlashDamage();
+        RaiseDamaged();
         if (current <= 0) GameManager.Instance.PlayerDied();
         return true;
     }
@@ -41,7 +44,7 @@ public class Health : MonoBehaviour
     {
         if (current <= 0) return;
         current = 0;
-        GameManager.Instance.UpdateUI();
+        RaiseDamaged();
         GameManager.Instance.PlayerDied();
     }
 
@@ -49,6 +52,13 @@ public class Health : MonoBehaviour
     {
         current = max;
         invulnerableUntil = Time.time + protection;
-        GameManager.Instance.UpdateUI();
+        Healed?.Invoke(current, max);
+        GameEvents.RaisePlayerHealed(current, max);
+    }
+
+    void RaiseDamaged()
+    {
+        Damaged?.Invoke(current, max);
+        GameEvents.RaisePlayerDamaged(current, max);
     }
 }
