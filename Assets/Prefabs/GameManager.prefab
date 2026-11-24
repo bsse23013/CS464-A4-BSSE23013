@@ -50,9 +50,5 @@ MonoBehaviour:
   spawnProtection: 1.5
   player: {fileID: 0}
   respawnPoint: {fileID: 0}
-  scoreText: {fileID: 0}
-  livesText: {fileID: 0}
-  hintText: {fileID: 0}
-  winPanel: {fileID: 0}
-  losePanel: {fileID: 0}
-  damageFlash: {fileID: 0}
+  winClip: {fileID: 8300000, guid: 68e8fe891acdc454bb6ab063ca75aac7, type: 3}
+  loseClip: {fileID: 8300000, guid: b24e34bf2e4b23246bebbd63958fc30e, type: 3}
